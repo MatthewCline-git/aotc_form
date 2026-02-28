@@ -76,34 +76,24 @@ export default function PDFDropzone() {
     multiple: true,
   });
 
-  const getResultDisplay = (file: FileAnalysis) => {
-    if (file.status === 'uploading' || file.status === 'analyzing') {
-      return (
-        <div className="flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-          <span className="text-gray-500 text-sm">
-            {file.status === 'uploading' ? 'Uploading...' : 'Analyzing...'}
-          </span>
-        </div>
-      );
+  const getVerdictBadge = (claimed: boolean | null) => {
+    if (claimed === true) {
+      return <span className="text-green-600 font-bold">YES</span>;
+    } else if (claimed === false) {
+      return <span className="text-gray-600 font-bold">NO</span>;
+    } else {
+      return <span className="text-yellow-600 font-medium">UNKNOWN</span>;
     }
+  };
 
-    if (file.status === 'error') {
-      return <span className="text-red-600 text-sm">{file.error}</span>;
-    }
-
-    if (file.result) {
-      const { claimed } = file.result;
-      if (claimed === true) {
-        return <span className="text-green-600 font-bold">YES</span>;
-      } else if (claimed === false) {
-        return <span className="text-gray-600 font-bold">NO</span>;
-      } else {
-        return <span className="text-yellow-600 font-medium">UNKNOWN</span>;
-      }
-    }
-
-    return null;
+  const getConfidenceBadge = (confidence: string) => {
+    const colors: Record<string, string> = {
+      high: 'bg-green-100 text-green-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      low: 'bg-orange-100 text-orange-800',
+      none: 'bg-gray-100 text-gray-800',
+    };
+    return colors[confidence] || colors.none;
   };
 
   return (
@@ -152,36 +142,70 @@ export default function PDFDropzone() {
           {files.map(file => (
             <div
               key={file.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+              className="bg-gray-50 rounded-lg overflow-hidden"
             >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <svg
-                  className="h-5 w-5 text-gray-400 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <span className="text-gray-700 text-sm truncate">{file.filename}</span>
-              </div>
-              <div className="flex items-center gap-4 flex-shrink-0">
-                {getResultDisplay(file)}
-                <button
-                  onClick={() => removeFile(file.id)}
-                  className="text-gray-400 hover:text-gray-600 p-1"
-                  aria-label="Remove"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              {/* Header row */}
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <svg
+                    className="h-5 w-5 text-gray-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
-                </button>
+                  <span className="text-gray-700 text-sm truncate">{file.filename}</span>
+                </div>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  {(file.status === 'uploading' || file.status === 'analyzing') && (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                      <span className="text-gray-500 text-sm">
+                        {file.status === 'uploading' ? 'Uploading...' : 'Analyzing...'}
+                      </span>
+                    </div>
+                  )}
+                  {file.status === 'error' && (
+                    <span className="text-red-600 text-sm">{file.error}</span>
+                  )}
+                  {file.status === 'complete' && file.result && (
+                    getVerdictBadge(file.result.claimed)
+                  )}
+                  <button
+                    onClick={() => removeFile(file.id)}
+                    className="text-gray-400 hover:text-gray-600 p-1"
+                    aria-label="Remove"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
+
+              {/* Details section for completed results */}
+              {file.status === 'complete' && file.result && (
+                <div className="px-4 pb-4 pt-0">
+                  <div className="border-t border-gray-200 pt-3 ml-8">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getConfidenceBadge(file.result.confidence)}`}
+                      >
+                        {file.result.confidence.charAt(0).toUpperCase() + file.result.confidence.slice(1)} confidence
+                      </span>
+                    </div>
+                    {file.result.reasoning && (
+                      <p className="text-gray-600 text-sm">{file.result.reasoning}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
