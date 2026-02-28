@@ -5,6 +5,14 @@ export interface AnalysisResult {
   error: string | null;
 }
 
+export interface FileAnalysis {
+  id: string;
+  filename: string;
+  status: 'uploading' | 'analyzing' | 'complete' | 'error';
+  result?: AnalysisResult;
+  error?: string;
+}
+
 export interface AnalyzeRequest {
   pdfBase64: string;
   filename?: string;
