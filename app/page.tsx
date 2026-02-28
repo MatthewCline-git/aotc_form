@@ -35,7 +35,7 @@ export default function Home() {
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          Your document is not stored. It is only analyzed in memory and immediately discarded.
+          It is analyzed once and immediately discarded.
         </p>
       </div>
     </main>
