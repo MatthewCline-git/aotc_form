@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import PDFDropzone from '@/components/PDFDropzone';
 import ResultDisplay from '@/components/ResultDisplay';
 import { AnalysisResult } from '@/lib/types';
@@ -35,7 +36,10 @@ export default function Home() {
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          It is analyzed once and immediately discarded.
+          It is analyzed once and immediately discarded.{' '}
+          <Link href="/privacy" className="underline hover:text-gray-600">
+            Privacy
+          </Link>
         </p>
       </div>
     </main>
